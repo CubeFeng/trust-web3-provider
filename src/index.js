@@ -17,13 +17,18 @@ import { TypedDataUtils } from "eth-sig-util";
 
 class TrustWeb3Provider extends EventEmitter {
   constructor(config) {
+
+    console.log(">>> address : ".concat(config.address));
+    console.log(">>> chainId : ".concat(config.chainId));
+    console.log(">>> rpcUrl : ".concat(config.rpcUrl));
+
     super();
     this.setConfig(config);
 
     this.idMapping = new IdMapping();
     this.callbacks = new Map();
     this.wrapResults = new Map();
-    this.isTrust = true;
+    this.isMetaMask = true;
     this.isDebug = !!config.isDebug;
 
     this.emitConnect(this.chainId);
@@ -35,7 +40,7 @@ class TrustWeb3Provider extends EventEmitter {
     this.ready = !!address;
     for (var i = 0; i < window.frames.length; i++) {
       const frame = window.frames[i];
-      if (frame.ethereum && frame.ethereum.isTrust) {
+      if (frame.ethereum && frame.ethereum.isMetaMask) {
         frame.ethereum.address = lowerAddress;
         frame.ethereum.ready = !!address;
       }
@@ -307,8 +312,8 @@ class TrustWeb3Provider extends EventEmitter {
         name: handler,
         object: data,
       };
-      if (window.trustwallet.postMessage) {
-        window.trustwallet.postMessage(object);
+      if (window.JuBiter.postMessage) {
+        window.JuBiter.postMessage(object);
       } else {
         // old clients
         window.webkit.messageHandlers[handler].postMessage(object);
@@ -371,7 +376,7 @@ class TrustWeb3Provider extends EventEmitter {
   }
 }
 
-window.trustwallet = {
+window.JuBiter = {
   Provider: TrustWeb3Provider,
   Web3: Web3,
   postMessage: null,
