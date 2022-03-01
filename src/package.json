@@ -10,7 +10,8 @@
   "author": "Trust <support@trustwalletapp.com>",
   "license": "MIT",
   "scripts": {
-    "build": "npx browserify index.js -t [ babelify --presets [ @babel/preset-env ] ] | uglifyjs > ../dist/trust-min.js",
+    "build-min": "npx browserify index.js -t [ babelify --presets [ @babel/preset-env ] ] | uglifyjs > ../dist/trust-min.js",
+    "build": "npx browserify index.js -t [ babelify --presets [ @babel/preset-env ] ] > ../dist/trust.js",
     "lint": "eslint . --fix",
     "test": "jest"
   },
