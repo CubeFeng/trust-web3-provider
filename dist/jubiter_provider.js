@@ -365,6 +365,7 @@ var TrustWeb3Provider = /*#__PURE__*/function (_EventEmitter) {
 
         switch (payload.method) {
           case "eth_accounts":
+          case "wallet_getPermissions":
             return _this2.sendResponse(payload.id, _this2.eth_accounts());
 
           case "eth_coinbase":
@@ -396,6 +397,7 @@ var TrustWeb3Provider = /*#__PURE__*/function (_EventEmitter) {
             return _this2.eth_sendTransaction(payload);
 
           case "eth_requestAccounts":
+          case "wallet_requestPermissions":
             return _this2.eth_requestAccounts(payload);
 
           case "wallet_watchAsset":
