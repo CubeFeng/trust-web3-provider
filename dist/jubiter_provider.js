@@ -224,7 +224,7 @@ var TrustWeb3Provider = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "setConfig",
     value: function setConfig(config) {
-      this.setAddress(config.address);
+      // this.setAddress(config.address);
       this.networkVersion = "" + config.chainId;
       this.chainId = "0x" + (config.chainId || 1).toString(16);
       this.rpc = new _rpc["default"](config.rpcUrl);
@@ -365,7 +365,6 @@ var TrustWeb3Provider = /*#__PURE__*/function (_EventEmitter) {
 
         switch (payload.method) {
           case "eth_accounts":
-          case "wallet_getPermissions":
             return _this2.sendResponse(payload.id, _this2.eth_accounts());
 
           case "eth_coinbase":
@@ -397,7 +396,6 @@ var TrustWeb3Provider = /*#__PURE__*/function (_EventEmitter) {
             return _this2.eth_sendTransaction(payload);
 
           case "eth_requestAccounts":
-          case "wallet_requestPermissions":
             return _this2.eth_requestAccounts(payload);
 
           case "wallet_watchAsset":
