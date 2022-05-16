@@ -125,7 +125,7 @@ class TrustWeb3Provider extends EventEmitter {
       that = window.ethereum;
     }
     if (Array.isArray(payload)) {
-      Promise.all(payload.map(that._request.bind(that)))
+      Promise.all(payload.map((_payload) => that._request(_payload)))
         .then((data) => callback(null, data))
         .catch((error) => callback(error, null));
     } else {
@@ -332,7 +332,7 @@ class TrustWeb3Provider extends EventEmitter {
     let callback = this.callbacks.get(id);
     let wrapResult = this.wrapResults.get(id);
     let data = { jsonrpc: "2.0", id: originId };
-    if (typeof result === "object" && result.jsonrpc && result.result) {
+    if (result !== null && typeof result === "object" && result.jsonrpc && result.result) {
       data.result = result.result;
     } else {
       data.result = result;
