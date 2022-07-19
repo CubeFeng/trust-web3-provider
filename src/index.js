@@ -13,7 +13,7 @@ import Utils from "./utils";
 import IdMapping from "./id_mapping";
 import { EventEmitter } from "events";
 import isUtf8 from "isutf8";
-import { TypedDataUtils } from "eth-sig-util";
+import { TypedDataUtils, SignTypedDataVersion } from "@metamask/eth-sig-util";
 
 class TrustWeb3Provider extends EventEmitter {
   constructor(config) {
@@ -77,7 +77,7 @@ class TrustWeb3Provider extends EventEmitter {
    */
   enable() {
     console.log(
-      "enable() is deprecated, please use window.ethereum.request({method: \"eth_requestAccounts\"}) instead."
+      'enable() is deprecated, please use window.ethereum.request({method: "eth_requestAccounts"}) instead.'
     );
     return this.request({ method: "eth_requestAccounts", params: [] });
   }
@@ -144,6 +144,7 @@ class TrustWeb3Provider extends EventEmitter {
     if (this.isDebug) {
       console.log(`==> _request payload ${JSON.stringify(payload)}`);
     }
+    this.fillJsonRpcVersion(payload);
     return new Promise((resolve, reject) => {
       if (!payload.id) {
         payload.id = Utils.genId();
@@ -173,10 +174,10 @@ class TrustWeb3Provider extends EventEmitter {
         case "personal_ecRecover":
           return this.personal_ecRecover(payload);
         case "eth_signTypedData_v3":
-          return this.eth_signTypedData(payload, false);
+          return this.eth_signTypedData(payload, SignTypedDataVersion.V3);
         case "eth_signTypedData":
         case "eth_signTypedData_v4":
-          return this.eth_signTypedData(payload, true);
+          return this.eth_signTypedData(payload, SignTypedDataVersion.V4);
         case "eth_sendTransaction":
           return this.eth_sendTransaction(payload);
         case "eth_requestAccounts":
@@ -211,6 +212,12 @@ class TrustWeb3Provider extends EventEmitter {
             .catch(reject);
       }
     });
+  }
+
+  fillJsonRpcVersion(payload) {
+    if (payload.jsonrpc === undefined) {
+      payload.jsonrpc = "2.0";
+    }
   }
 
   emitConnect(chainId) {
@@ -267,9 +274,9 @@ class TrustWeb3Provider extends EventEmitter {
     });
   }
 
-  eth_signTypedData(payload, useV4) {
+  eth_signTypedData(payload, version) {
     const message = JSON.parse(payload.params[1]);
-    const hash = TypedDataUtils.sign(message, useV4);
+    const hash = TypedDataUtils.eip712Hash(message, version);
     this.postMessage("signTypedMessage", payload.id, {
       data: "0x" + hash.toString("hex"),
       raw: payload.params[1],
@@ -332,7 +339,12 @@ class TrustWeb3Provider extends EventEmitter {
     let callback = this.callbacks.get(id);
     let wrapResult = this.wrapResults.get(id);
     let data = { jsonrpc: "2.0", id: originId };
-    if (result !== null && typeof result === "object" && result.jsonrpc && result.result) {
+    if (
+      result !== null &&
+      typeof result === "object" &&
+      result.jsonrpc &&
+      result.result
+    ) {
       data.result = result.result;
     } else {
       data.result = result;
