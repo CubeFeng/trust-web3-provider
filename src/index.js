@@ -6,7 +6,7 @@
 
 "use strict";
 
-import Web3 from "web3";
+// import Web3 from "web3";
 import RPCServer from "./rpc";
 import ProviderRpcError from "./error";
 import Utils from "./utils";
@@ -159,6 +159,7 @@ class TrustWeb3Provider extends EventEmitter {
 
       switch (payload.method) {
         case "eth_accounts":
+        case "wallet_getPermissions":
           return this.sendResponse(payload.id, this.eth_accounts());
         case "eth_coinbase":
           return this.sendResponse(payload.id, this.eth_coinbase());
@@ -180,6 +181,7 @@ class TrustWeb3Provider extends EventEmitter {
         case "eth_sendTransaction":
           return this.eth_sendTransaction(payload);
         case "eth_requestAccounts":
+        case "wallet_requestPermissions":
           return this.eth_requestAccounts(payload);
         case "wallet_watchAsset":
           return this.wallet_watchAsset(payload);
@@ -378,6 +380,6 @@ class TrustWeb3Provider extends EventEmitter {
 
 window.JuBiter = {
   Provider: TrustWeb3Provider,
-  Web3: Web3,
+  // Web3: Web3,
   postMessage: null,
 };
