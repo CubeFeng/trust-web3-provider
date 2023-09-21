@@ -6,31 +6,24 @@
 
 "use strict";
 
-// import Web3 from "web3";
 import RPCServer from "./rpc";
 import ProviderRpcError from "./error";
 import Utils from "./utils";
 import IdMapping from "./id_mapping";
-import { EventEmitter } from "events";
 import isUtf8 from "isutf8";
 import { TypedDataUtils, SignTypedDataVersion } from "@metamask/eth-sig-util";
+import BaseProvider from "./base_provider";
 
-class TrustWeb3Provider extends EventEmitter {
+class TrustWeb3Provider extends BaseProvider {
   constructor(config) {
-
-    console.log(">>> address : ".concat(config.address));
-    console.log(">>> chainId : ".concat(config.chainId));
-    console.log(">>> rpcUrl : ".concat(config.rpcUrl));
-
-    super();
+    super(config);
     this.setConfig(config);
 
+    this.providerNetwork = "ethereum";
     this.idMapping = new IdMapping();
     this.callbacks = new Map();
     this.wrapResults = new Map();
-    this.isTrust = true;
-    this.isMetaMask = false;
-    this.isDebug = !!config.isDebug;
+    this.isMetaMask = !!config.ethereum.isMetaMask;
 
     this.emitConnect(this.chainId);
   }
@@ -39,21 +32,25 @@ class TrustWeb3Provider extends EventEmitter {
     const lowerAddress = (address || "").toLowerCase();
     this.address = lowerAddress;
     this.ready = !!address;
-    for (var i = 0; i < window.frames.length; i++) {
-      const frame = window.frames[i];
-      if (frame.ethereum && frame.ethereum.isMetaMask) {
-        frame.ethereum.address = lowerAddress;
-        frame.ethereum.ready = !!address;
+    try {
+      for (var i = 0; i < window.frames.length; i++) {
+        const frame = window.frames[i];
+        if (frame.ethereum && frame.ethereum.isTrust) {
+          frame.ethereum.address = lowerAddress;
+          frame.ethereum.ready = !!address;
+        }
       }
+    } catch (error) {
+      console.log(error);
     }
   }
 
   setConfig(config) {
-    // this.setAddress(config.address);
+    this.setAddress(config.ethereum.address);
 
-    this.networkVersion = "" + config.chainId;
-    this.chainId = "0x" + (config.chainId || 1).toString(16);
-    this.rpc = new RPCServer(config.rpcUrl);
+    this.networkVersion = "" + config.ethereum.chainId;
+    this.chainId = "0x" + (config.ethereum.chainId || 1).toString(16);
+    this.rpc = new RPCServer(config.ethereum.rpcUrl);
     this.isDebug = !!config.isDebug;
   }
 
@@ -78,7 +75,7 @@ class TrustWeb3Provider extends EventEmitter {
    */
   enable() {
     console.log(
-      'enable() is deprecated, please use window.ethereum.request({method: "eth_requestAccounts"}) instead.'
+      "enable() is deprecated, please use window.ethereum.request({method: 'eth_requestAccounts'}) instead."
     );
     return this.request({ method: "eth_requestAccounts", params: [] });
   }
@@ -161,7 +158,6 @@ class TrustWeb3Provider extends EventEmitter {
 
       switch (payload.method) {
         case "eth_accounts":
-        case "wallet_getPermissions":
           return this.sendResponse(payload.id, this.eth_accounts());
         case "eth_coinbase":
           return this.sendResponse(payload.id, this.eth_coinbase());
@@ -183,7 +179,6 @@ class TrustWeb3Provider extends EventEmitter {
         case "eth_sendTransaction":
           return this.eth_sendTransaction(payload);
         case "eth_requestAccounts":
-        case "wallet_requestPermissions":
           return this.eth_requestAccounts(payload);
         case "wallet_watchAsset":
           return this.wallet_watchAsset(payload);
@@ -317,17 +312,7 @@ class TrustWeb3Provider extends EventEmitter {
    */
   postMessage(handler, id, data) {
     if (this.ready || handler === "requestAccounts") {
-      let object = {
-        id: id,
-        name: handler,
-        object: data,
-      };
-      if (window.JuBiter.postMessage) {
-        window.JuBiter.postMessage(object);
-      } else {
-        // old clients
-        window.webkit.messageHandlers[handler].postMessage(object);
-      }
+      super.postMessage(handler, id, data);
     } else {
       // don't forget to verify in the app
       this.sendError(id, new ProviderRpcError(4100, "provider is not ready"));
@@ -377,23 +362,6 @@ class TrustWeb3Provider extends EventEmitter {
       }
     }
   }
-
-  /**
-   * @private Internal native error -> js
-   */
-  sendError(id, error) {
-    console.log(`<== ${id} sendError ${error}`);
-    let callback = this.callbacks.get(id);
-    if (callback) {
-      callback(error instanceof Error ? error : new Error(error), null);
-      this.callbacks.delete(id);
-    }
-  }
 }
 
-window.JuBiter = {
-  Provider: TrustWeb3Provider,
-  // Web3: Web3,
-  SolanaProvider: TrustSolanaWeb3Provider,
-  postMessage: null,
-};
+module.exports = TrustWeb3Provider;

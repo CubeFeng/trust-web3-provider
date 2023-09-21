@@ -222,7 +222,7 @@ var TrustWeb3Provider = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "setConfig",
     value: function setConfig(config) {
-      this.setAddress(config.address);
+      // this.setAddress(config.address);
       this.networkVersion = "" + config.chainId;
       this.chainId = "0x" + (config.chainId || 1).toString(16);
       this.rpc = new _rpc["default"](config.rpcUrl);
